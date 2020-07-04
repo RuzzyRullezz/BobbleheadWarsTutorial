@@ -15,6 +15,8 @@ public class GameManager : MonoBehaviour {
     public GameObject upgradePrefab;
     public Gun gun;
     public float upgradeMaxTimeSpawn = 7.5f;
+    public GameObject deathFloor;
+    public Animator arenaAnimator;
 
     private bool spawnedUpgrade = false;
     private float actualUpgradeTime = 0;
@@ -33,6 +35,10 @@ public class GameManager : MonoBehaviour {
 	// Update is called once per frame
 	void Update ()
     {
+        if (player == null)
+        {
+            return;
+        }
         currentUpgradeTime += Time.deltaTime;
         currentSpawnTime += Time.deltaTime;
 
@@ -86,9 +92,27 @@ public class GameManager : MonoBehaviour {
                         alienScript.target = player.transform;
                         Vector3 targetRotation = new Vector3(player.transform.position.x, newAlien.transform.position.y, player.transform.position.z);
                         newAlien.transform.LookAt(targetRotation);
+                        alienScript.OnDestroy.AddListener(AlienDestroyed);
+                        alienScript.GetDeathParticles().SetDeathFloor(deathFloor);
                     }
                 }
             }
         }
+    }
+
+    public void AlienDestroyed()
+    {
+        aliensOnScreen -= 1;
+        totalAliens -= 1;
+        if (totalAliens == 0)
+        {
+            Invoke("endGame", 2.0f);
+        }
+    }
+    
+    private void endGame()
+    {
+        SoundManager.Instance.PlayOneShot(SoundManager.Instance.elevatorArrived);
+        arenaAnimator.SetTrigger("PlayerWon");
     }
 }
